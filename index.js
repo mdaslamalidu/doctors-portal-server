@@ -34,14 +34,28 @@ async function run() {
       .collection("bookings");
 
     app.get("/appointmentOption", async (req, res) => {
+      const date = req.query.date;
       const query = {};
       const options = await appointmentCollections.find(query).toArray();
+      const bookingQuery = { appointmentDate: date };
+      const alreadyBooked = await bookingsCollection
+        .find(bookingQuery)
+        .toArray();
+      options.forEach((option) => {
+        const optionBooked = alreadyBooked.filter(
+          (book) => book.treatmentName === option.name
+        );
+        const bookSlot = optionBooked.map((book) => book.slot);
+        const remainingSlots = option.slots.filter(
+          (slot) => !bookSlot.includes(slot)
+        );
+        option.slots = remainingSlots;
+      });
       res.send(options);
     });
 
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
-      console.log(booking);
       const result = await bookingsCollection.insertOne(booking);
       res.send(result);
     });
