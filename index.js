@@ -33,6 +33,8 @@ async function run() {
       .db("doctors-portal")
       .collection("bookings");
 
+    const usersCollection = client.db("doctors-portal").collection("users");
+
     app.get("/appointmentOption", async (req, res) => {
       const date = req.query.date;
       const query = {};
@@ -74,6 +76,19 @@ async function run() {
       }
 
       const result = await bookingsCollection.insertOne(booking);
+      res.send(result);
+    });
+
+    app.get("/bookings", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const result = await bookingsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/users", async (req, res) => {
+      const query = req.body;
+      const result = await usersCollection.insertOne(query);
       res.send(result);
     });
   } finally {
