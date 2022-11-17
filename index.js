@@ -25,6 +25,22 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+function veryJwt(req, res, next) {
+  const authHeader = req.headers.authorizations;
+  if (!authHeader) {
+    return res.status(401).send("unauthorization access");
+  }
+
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 async function run() {
   try {
     const appointmentCollections = client
@@ -59,7 +75,6 @@ async function run() {
 
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
-
       const query = {
         appointmentDate: booking.appointmentDate,
         treatmentName: booking.treatmentName,
@@ -80,8 +95,14 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings", veryJwt, async (req, res) => {
       const email = req.query.email;
+
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
       const query = { email: email };
       const result = await bookingsCollection.find(query).toArray();
       res.send(result);
@@ -97,7 +118,6 @@ async function run() {
         });
         res.send({ accessToken: token });
       }
-
       res.status(403).send({ accesToken: "" });
     });
 
