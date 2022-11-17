@@ -91,8 +91,14 @@ async function run() {
       const email = req.query.email;
       const query = { email: email };
       const user = await usersCollection.findOne(query);
-      console.log(user);
-      res.send({ accesToken: "token" });
+      if (user) {
+        const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
+          expiresIn: "1h",
+        });
+        res.send({ accessToken: token });
+      }
+
+      res.status(403).send({ accesToken: "" });
     });
 
     app.post("/users", async (req, res) => {
