@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const port = process.env.PORT || 5000;
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const app = express();
@@ -84,6 +85,14 @@ async function run() {
       const query = { email: email };
       const result = await bookingsCollection.find(query).toArray();
       res.send(result);
+    });
+
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      console.log(user);
+      res.send({ accesToken: "token" });
     });
 
     app.post("/users", async (req, res) => {
