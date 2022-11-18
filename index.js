@@ -75,6 +75,7 @@ async function run() {
 
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
+      console.log(booking);
       const query = {
         appointmentDate: booking.appointmentDate,
         treatmentName: booking.treatmentName,
@@ -124,6 +125,12 @@ async function run() {
     app.post("/users", async (req, res) => {
       const query = req.body;
       const result = await usersCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const result = await usersCollection.find(query).toArray();
       res.send(result);
     });
   } finally {
