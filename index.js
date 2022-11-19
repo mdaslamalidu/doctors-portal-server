@@ -117,9 +117,9 @@ async function run() {
         const token = jwt.sign({ email }, process.env.ACCESS_TOKEN, {
           expiresIn: "1h",
         });
-        res.send({ accessToken: token });
+        return res.send({ accessToken: token });
       }
-      res.status(403).send({ accesToken: "" });
+      return res.status(403).send({ accesToken: "" });
     });
 
     app.post("/users", async (req, res) => {
@@ -135,8 +135,8 @@ async function run() {
     });
 
     app.get("/users/admin/:email", async (req, res) => {
-      const email = req.query.email;
-      const query = { email };
+      const email = req.params.email;
+      const query = { email: email };
       const user = await usersCollection.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
     });
@@ -159,6 +159,15 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(query, updateDoc, update);
+      res.send(result);
+    });
+
+    app.get("/appointmentSpeciality", async (req, res) => {
+      const query = {};
+      const result = await appointmentCollections
+        .find(query)
+        .project({ name: 1 })
+        .toArray();
       res.send(result);
     });
   } finally {
