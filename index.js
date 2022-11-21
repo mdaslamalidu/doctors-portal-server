@@ -50,8 +50,18 @@ async function run() {
       .db("doctors-portal")
       .collection("bookings");
     const doctorsCollection = client.db("doctors-portal").collection("doctors");
-
     const usersCollection = client.db("doctors-portal").collection("users");
+
+    const verifyAdmin = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const email = { email: decodedEmail };
+      const user = await usersCollection.findOne(email);
+
+      if (user?.role !== "admin") {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
 
     app.get("/appointmentOption", async (req, res) => {
       const date = req.query.date;
@@ -76,7 +86,6 @@ async function run() {
 
     app.post("/bookings", async (req, res) => {
       const booking = req.body;
-      console.log(booking);
       const query = {
         appointmentDate: booking.appointmentDate,
         treatmentName: booking.treatmentName,
@@ -107,6 +116,13 @@ async function run() {
 
       const query = { email: email };
       const result = await bookingsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get("/bookings/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await bookingsCollection.findOne(query);
       res.send(result);
     });
 
@@ -142,7 +158,7 @@ async function run() {
       res.send({ isAdmin: user?.role === "admin" });
     });
 
-    app.put("/users/admin/:id", veryJwt, async (req, res) => {
+    app.put("/users/admin/:id", veryJwt, verifyAdmin, async (req, res) => {
       const decodedEmail = req.decoded.email;
       const email = { email: decodedEmail };
       const user = await usersCollection.findOne(email);
@@ -163,6 +179,22 @@ async function run() {
       res.send(result);
     });
 
+    // app.get("/addPrice", async (req, res) => {
+    //   const query = {};
+    //   const update = { upsert: true };
+    //   const updateDoc = {
+    //     $set: {
+    //       price: 99,
+    //     },
+    //   };
+    //   const result = await appointmentCollections.updateMany(
+    //     query,
+    //     updateDoc,
+    //     update
+    //   );
+    //   res.send(result);
+    // });
+
     app.get("/appointmentSpeciality", async (req, res) => {
       const query = {};
       const result = await appointmentCollections
@@ -172,19 +204,19 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/doctors", async (req, res) => {
+    app.post("/doctors", veryJwt, verifyAdmin, async (req, res) => {
       const body = req.body;
       const result = await doctorsCollection.insertOne(body);
       res.send(result);
     });
 
-    app.get("/doctors", async (req, res) => {
+    app.get("/doctors", veryJwt, verifyAdmin, async (req, res) => {
       const query = {};
       const result = await doctorsCollection.find(query).toArray();
       res.send(result);
     });
 
-    app.delete("/doctor/:id", async (req, res) => {
+    app.delete("/doctors/:id", veryJwt, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await doctorsCollection.deleteOne(filter);
