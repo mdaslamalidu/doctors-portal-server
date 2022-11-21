@@ -107,6 +107,21 @@ async function run() {
       res.send(result);
     });
 
+    app.post("/create-payment-intent", async (req, res) => {
+      const bookings = req.body;
+      const price = bookings.price;
+      const amount = price * 100;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        "payment_method-types": ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
     app.get("/bookings", veryJwt, async (req, res) => {
       const email = req.query.email;
 
