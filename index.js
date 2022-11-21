@@ -52,6 +52,9 @@ async function run() {
       .collection("bookings");
     const doctorsCollection = client.db("doctors-portal").collection("doctors");
     const usersCollection = client.db("doctors-portal").collection("users");
+    const paymentsCollection = client
+      .db("doctors-portal")
+      .collection("payments");
 
     const verifyAdmin = async (req, res, next) => {
       const decodedEmail = req.decoded.email;
@@ -107,6 +110,12 @@ async function run() {
       res.send(result);
     });
 
+    app.post("/payments", async (req, res) => {
+      const query = req.body;
+      const result = await paymentsCollection.insertOne(query);
+      res.send(result);
+    });
+
     app.post("/create-payment-intent", async (req, res) => {
       const bookings = req.body;
       const price = bookings.price;
@@ -115,7 +124,7 @@ async function run() {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: "usd",
-        "payment_method-types": ["card"],
+        payment_method_types: ["card"],
       });
       res.send({
         clientSecret: paymentIntent.client_secret,
